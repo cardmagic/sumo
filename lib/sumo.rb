@@ -16,7 +16,7 @@ class Sumo
 			:image_id => ami,
 			:instance_type => config['instance_size'] || 'm1.small',
 			:key_name => 'sumo',
-			:group_id => [ 'sumo' ],
+			:security_group => [ 'sumo' ],
 			:availability_zone => config['availability_zone']
 		)
 		result.instancesSet.item[0].instanceId
@@ -166,7 +166,7 @@ class Sumo
 			'apt-get install -y ruby ruby-dev rubygems git-core',
 			'gem sources -a http://gems.opscode.com',
 			'gem install chef ohai --no-rdoc --no-ri',
-			"git clone #{config['cookbooks_url']}",
+			"git clone #{config['cookbooks_url']} chef-cookbooks",
 		]
 		ssh(hostname, commands)
 	end
@@ -174,7 +174,9 @@ class Sumo
 	def setup_role(hostname, role)
 		commands = [
 			"cd chef-cookbooks",
-			"/var/lib/gems/1.8/bin/chef-solo -c config.json -j roles/#{role}.json"
+			"echo 'file_cache_path \"/tmp/chef-solo\"' > config.json",
+			"echo 'cookbook_path \"/root/chef-cookbooks\"' >> config.json",
+			"/var/lib/gems/1.8/bin/chef-solo -c config.json -j #{role}/metadata.json"
 		]
 		ssh(hostname, commands)
 	end
