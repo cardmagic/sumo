@@ -167,9 +167,12 @@ class Sumo
 			'apt-get install -y ruby ruby-dev rubygems git-core',
 			'gem sources -a http://gems.opscode.com',
 			'gem install chef ohai --no-rdoc --no-ri',
-			"git clone #{config['cookbooks_url']} chef-cookbooks",
+			config['cookbooks_url'] ? "git clone #{config['cookbooks_url']} chef-cookbooks" : "echo done",
 		]
 		ssh(hostname, commands)
+		if config['cookbooks_dir']
+		  scp(hostname, config['cookbooks_dir'], "chef-cookbooks")
+	  end
 	end
 
 	def setup_role(hostname, role)
@@ -181,11 +184,21 @@ class Sumo
 	end
 
 	def ssh(hostname, cmds)
-		IO.popen("ssh-keyscan -t rsa #{hostname} >> $HOME/.ssh/known_hosts && ssh -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
+	  unless IO.read(".ssh/known_hosts").include?(hostname)
+	    `ssh-keyscan -t rsa #{hostname} >> $HOME/.ssh/known_hosts`
+    end
+		IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
 			pipe.puts cmds.join(' && ')
 		end
 		unless $?.success?
 			abort "failed\nCheck ~/.sumo/ssh.log for the output"
+		end
+	end
+
+	def scp(hostname, directory, endpoint=".")
+		`scp -i #{keypair_file} -r #{directory} #{config['user']}@#{hostname}:#{endpoint}`
+		unless $?.success?
+			abort "failed to transfer #{directory}"
 		end
 	end
 
