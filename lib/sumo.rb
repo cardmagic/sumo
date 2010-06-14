@@ -1,6 +1,7 @@
 require 'AWS'
 require 'yaml'
 require 'socket'
+require 'net/ssh'
 
 class Sumo
 	def launch
@@ -180,12 +181,46 @@ class Sumo
 	end
 
 	def ssh(hostname, cmds)
-		IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
+		IO.popen("ssh-keyscan -t rsa #{hostname} >> $HOME/.ssh/known_hosts && ssh -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
 			pipe.puts cmds.join(' && ')
 		end
 		unless $?.success?
 			abort "failed\nCheck ~/.sumo/ssh.log for the output"
 		end
+	end
+
+	def new_ssh(hostname, cmds)
+    Net::SSH.start(hostname, config['user'], :keys => [keypair_file], :compression => "none") do |ssh|
+      # capture all stderr and stdout output from a remote process
+            
+      File.open(File.expand_path("~/.sumo/ssh.log"), "w") do |log|
+        ssh.open_channel do |channel|          
+          cmds.each do |cmd|
+            channel.exec cmd do |ch, success|
+        			abort "failed on #{cmd}\nCheck ~/.sumo/ssh.log for the output" unless success
+
+              channel.on_data do |ch, data|
+                puts "Got data #{data.inspect}"
+                log << data
+                log.flush
+              end
+
+              channel.on_extended_data do |ch, type, data|
+                puts "Got data #{data.inspect}"
+                log << data
+                log.flush
+              end
+              
+              channel.on_close do |ch|
+                puts "channel is closing!"
+              end
+            end
+          end
+        end
+
+        ssh.loop
+      end
+    end
 	end
 
 	def resources(hostname)
