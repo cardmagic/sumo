@@ -184,10 +184,10 @@ class Sumo
 	end
 
 	def ssh(hostname, cmds)
-	  unless IO.read(".ssh/known_hosts").include?(hostname)
+	  unless IO.read(File.expand_path("~/.ssh/known_hosts")).include?(hostname)
 	    `ssh-keyscan -t rsa #{hostname} >> $HOME/.ssh/known_hosts`
     end
-		IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
+		IO.popen("ssh -t -t -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
 			pipe.puts cmds.join(' && ')
 		end
 		unless $?.success?
