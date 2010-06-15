@@ -15,7 +15,7 @@ class Sumo
 
 		result = ec2.run_instances(
 			:image_id => ami,
-			:instance_type => config['instance_size'] || 'm1.small',
+			:instance_type => config['instance_size'],
 			:key_name => 'sumo',
 			:security_group => [ 'sumo' ],
 			:availability_zone => config['availability_zone']
@@ -91,7 +91,9 @@ class Sumo
 				instances << {
 					:instance_id => item.instanceId,
 					:status => item.instanceState.name,
-					:hostname => item.dnsName
+					:hostname => item.dnsName,
+					:local_dns => item.privateDnsName,
+					:private_ip => item.privateIpAddress
 				}
 			end
 		end
@@ -147,6 +149,18 @@ class Sumo
 		end
 	end
 
+	def wait_for_private_ip(instance_id)
+		raise ArgumentError unless instance_id and instance_id.match(/^i-/)
+		loop do
+			if inst = instance_info(instance_id)
+				if private_ip = inst[:private_ip]
+					return private_ip
+				end
+			end
+			sleep 1
+		end
+	end
+
 	def wait_for_ssh(hostname)
 		raise ArgumentError unless hostname
 		loop do
@@ -165,9 +179,8 @@ class Sumo
 			'apt-get update',
 			'apt-get autoremove -y',
 			'apt-get install -y ruby ruby-dev rubygems git-core',
-			'gem sources -a http://gems.opscode.com',
 			'gem install chef ohai --no-rdoc --no-ri',
-			config['cookbooks_url'] ? "git clone #{config['cookbooks_url']} chef-cookbooks" : "echo done",
+			config['cookbooks_url'] ? "if [ -d chef-cookbooks ]; then cd chef-cookbooks; git pull; else git clone #{config['cookbooks_url']} chef-cookbooks; fi" : "echo done",
 		]
 		ssh(hostname, commands)
 		if config['cookbooks_dir']
@@ -186,12 +199,18 @@ class Sumo
 	def ssh(hostname, cmds)
 	  unless IO.read(File.expand_path("~/.ssh/known_hosts")).include?(hostname)
 	    `ssh-keyscan -t rsa #{hostname} >> $HOME/.ssh/known_hosts`
+	    if config['deploy_key']
+	      scp(hostname, config['deploy_key'], ".ssh/id_rsa")
+      end
+      if config['known_hosts']
+        scp(hostname, config['known_hosts'], ".ssh/known_hosts")
+      end
     end
-		IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > ~/.sumo/ssh.log 2>&1", "w") do |pipe|
+		IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > #{config['logfile'] || "~/.sumo/ssh.log"} 2>&1", "w") do |pipe|
 			pipe.puts cmds.join(' && ')
 		end
 		unless $?.success?
-			abort "failed\nCheck ~/.sumo/ssh.log for the output"
+			abort "failed\nCheck #{config['logfile'] || "~/.sumo/ssh.log"} for the output"
 		end
 	end
 
@@ -266,11 +285,16 @@ class Sumo
 		@config ||= default_config.merge read_config
 	end
 
+	def set(key, value)
+		config[key] = value
+	end
+
 	def default_config
 		{
 			'user' => 'root',
 			'ami' => 'ami-ed46a784',
-			'availability_zone' => 'us-east-1b'
+			'availability_zone' => 'us-east-1b',
+			'instance_size' => 'm1.small'
 		}
 	end
 
