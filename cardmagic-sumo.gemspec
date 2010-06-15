@@ -4,12 +4,12 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{sumo}
-  s.version = "0.3.0"
+  s.name = %q{cardmagic-sumo}
+  s.version = "0.3.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = %q{2010-06-14}
+  s.date = %q{2010-06-15}
   s.default_executable = %q{sumo}
   s.description = %q{A no-hassle way to launch one-off EC2 instances from the command line}
   s.email = %q{adam@heroku.com}
@@ -26,7 +26,7 @@ Gem::Specification.new do |s|
      "spec/base.rb",
      "spec/sumo_spec.rb"
   ]
-  s.homepage = %q{http://github.com/adamwiggins/sumo}
+  s.homepage = %q{http://github.com/cardmagic/sumo}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubyforge_project = %q{sumo}
