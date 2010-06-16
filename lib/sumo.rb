@@ -75,6 +75,13 @@ class Sumo
 		)
 		result["volumeId"]
 	end
+	
+	def format_volume(volume, instance, device, mountpoint)
+		commands = [
+			"if [ -f #{device}1 ]; then mount #{device}1 #{mountpoint}; else echo ',,L' | sfdisk #{device} && mkfs.ext3 /dev/sdj1 && mount #{device}1 #{mountpoint}; fi"
+		]
+		ssh(instance, commands)
+  end
 
 	def destroy_volume(volume)
 		ec2.delete_volume(:volume_id => volume)
