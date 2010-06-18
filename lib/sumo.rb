@@ -78,7 +78,8 @@ class Sumo
 	
 	def format_volume(volume, instance, device, mountpoint)
 		commands = [
-			"if [ ! -d #{mountpoint} ]; then mkdir #{mountpoint}; fi && if [ -f /dev/#{device}1 ]; then mount /dev/#{device}1 #{mountpoint}; else echo ',,L' | sfdisk /dev/#{device} && mkfs.ext3 /dev/#{device}1 && mount /dev/#{device}1 #{mountpoint}; fi"
+			"if [ ! -d #{mountpoint} ]; then mkdir #{mountpoint}; fi",
+			"if [ -b /dev/#{device}1 ]; then mount /dev/#{device}1 #{mountpoint}; else echo ',,L' | sfdisk /dev/#{device} && mkfs.ext3 /dev/#{device}1 && mount /dev/#{device}1 #{mountpoint}; fi"
 		]
 		ssh(instance, commands)
   end
