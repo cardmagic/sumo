@@ -199,7 +199,7 @@ class Sumo
 	def setup_role(hostname, role)
 		commands = [
 			"cd chef-cookbooks",
-			"/var/lib/gems/1.8/bin/chef-solo -c solo.rb -j roles/#{role}.json"
+			"/var/lib/gems/1.8/bin/chef-solo -c config/solo.rb -j roles/#{role}.json"
 		]
 		ssh(hostname, commands)
 	end
