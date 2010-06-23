@@ -62,7 +62,7 @@ class CLI < Thor
 	def role(role, id=nil)
 		inst = sumo.find(id) || sumo.running.first || abort("No running instances")
 		task "Setup #{role}" do
-			sumo.setup_role(inst[:hostname], role)
+			sumo.setup_role(inst[:hostname], inst[:instance_id], role)
 		end
 	end
 

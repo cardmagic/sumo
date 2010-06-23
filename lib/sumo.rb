@@ -188,7 +188,7 @@ class Sumo
 			'apt-get autoremove -y',
 			'apt-get install -y xfsprogs xfsdump xfslibs-dev ruby ruby-dev rubygems git-core',
 			'gem install chef ohai --no-rdoc --no-ri',
-			'rm -rf validation.pem',
+			'rm -rf ~/validation.pem',
 			config['cookbooks_url'] ? "if [ -d chef-cookbooks ]; then cd chef-cookbooks; git pull; else git clone #{config['cookbooks_url']} chef-cookbooks; fi" : "echo done"
 		]
 		ssh(hostname, commands)
@@ -200,7 +200,7 @@ class Sumo
     end
 	end
 
-	def setup_role(instance_id, role)
+	def setup_role(hostname, instance_id, role)
 		commands = [
 			"cd chef-cookbooks",
 			"/var/lib/gems/1.8/bin/chef-solo -c config/solo.rb -j roles/bootstrap.json -r http://s3.amazonaws.com/chef-solo/bootstrap-latest.tar.gz",
