@@ -15,7 +15,7 @@ class CLI < Thor
 		if role
 			task("Bootstrap chef") { sumo.bootstrap_chef(host) }
 			role.split(',').each do |role|
-				task("Setup #{role}") { sumo.setup_role(host, role) }
+				task("Setup #{role}") { sumo.setup_role(id, role) }
 			end
 
 			resources = sumo.resources(host)

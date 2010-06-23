@@ -188,10 +188,11 @@ class Sumo
 			'apt-get autoremove -y',
 			'apt-get install -y xfsprogs xfsdump xfslibs-dev ruby ruby-dev rubygems git-core',
 			'gem install chef ohai --no-rdoc --no-ri',
+			'rm -rf validation.pem',
 			config['cookbooks_url'] ? "if [ -d chef-cookbooks ]; then cd chef-cookbooks; git pull; else git clone #{config['cookbooks_url']} chef-cookbooks; fi" : "echo done"
 		]
 		ssh(hostname, commands)
-		if config['cookbooks_dir']
+		if !config['cookbooks_url'] && config['cookbooks_dir']
 		  scp(hostname, config['cookbooks_dir'], "chef-cookbooks")
 	  end
 	  if config['chef-validation']
@@ -199,7 +200,7 @@ class Sumo
     end
 	end
 
-	def setup_role(hostname, role)
+	def setup_role(instance_id, role)
 		commands = [
 			"cd chef-cookbooks",
 			"/var/lib/gems/1.8/bin/chef-solo -c config/solo.rb -j roles/bootstrap.json -r http://s3.amazonaws.com/chef-solo/bootstrap-latest.tar.gz",
@@ -207,6 +208,8 @@ class Sumo
 			"if [ -f ~/validation.pem ]; then mv ~/validation.pem /etc/chef/ && chef-client ; rm /etc/chef/validation.pem; fi"
 		]
 		ssh(hostname, commands)
+		`knife node run_list add #{instance_id} "role[#{role}]"`
+		ssh(hostname, %w{chef-client})
 	end
 
 	def ssh(hostname, cmds)
