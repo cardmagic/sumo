@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{cardmagic-sumo}
-  s.version = "0.3.2"
+  s.version = "0.3.3"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = %q{2010-06-20}
+  s.date = %q{2010-06-22}
   s.default_executable = %q{sumo}
   s.description = %q{A no-hassle way to launch one-off EC2 instances from the command line}
   s.email = %q{adam@heroku.com}
