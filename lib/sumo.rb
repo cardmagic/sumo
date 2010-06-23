@@ -186,7 +186,7 @@ class Sumo
 		commands = [
 			'apt-get update',
 			'apt-get autoremove -y',
-			'apt-get install -y ruby ruby-dev rubygems git-core',
+			'apt-get install -y xfsprogs xfsdump xfslibs-dev ruby ruby-dev rubygems git-core',
 			'gem install chef ohai --no-rdoc --no-ri',
 			config['cookbooks_url'] ? "if [ -d chef-cookbooks ]; then cd chef-cookbooks; git pull; else git clone #{config['cookbooks_url']} chef-cookbooks; fi" : "echo done"
 		]
