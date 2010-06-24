@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Adam Wiggins"]
-  s.date = %q{2010-06-23}
+  s.date = %q{2010-06-24}
   s.default_executable = %q{sumo}
   s.description = %q{A no-hassle way to launch one-off EC2 instances from the command line}
   s.email = %q{adam@heroku.com}

@@ -78,8 +78,8 @@ class Sumo
 	
 	def format_volume(volume, instance, device, mountpoint)
 		commands = [
-			"if [ ! -d #{mountpoint} ]; then mkdir #{mountpoint}; fi",
-			"if [ -b /dev/#{device}1 ]; then mount /dev/#{device}1 #{mountpoint}; else echo ',,L' | sfdisk /dev/#{device} && mkfs.xfs /dev/#{device}1 && mount /dev/#{device}1 #{mountpoint}; fi"
+			"if [ ! -d #{mountpoint} ]; then sudo mkdir #{mountpoint}; fi",
+			"if [ -b /dev/#{device}1 ]; then sudo mount /dev/#{device}1 #{mountpoint}; else echo ',,L' | sudo sfdisk /dev/#{device} && sudo mkfs.xfs /dev/#{device}1 && sudo mount /dev/#{device}1 #{mountpoint}; fi"
 		]
 		ssh(instance, commands)
   end
@@ -184,11 +184,11 @@ class Sumo
 
 	def bootstrap_chef(hostname)
 		commands = [
-			'apt-get update',
-			'apt-get autoremove -y',
-			'apt-get install -y xfsprogs xfsdump xfslibs-dev ruby ruby-dev rubygems git-core',
-			'gem install chef ohai --no-rdoc --no-ri',
-			'rm -rf ~/validation.pem',
+			'sudo apt-get update',
+			'sudo apt-get autoremove -y',
+			'if [ ! -f /usr/lib/ruby/1.8/net/https.rb ]; then sudo apt-get install -y xfsprogs xfsdump xfslibs-dev ruby ruby-dev rubygems libopenssl-ruby1.8 git-core; fi',
+			'if [ ! -d /etc/chef ]; then sudo mkdir /etc/chef; fi',
+			'if [ ! -d /var/lib/gems/1.8/gems/chef-* ]; then sudo gem install chef ohai --no-rdoc --no-ri; fi',
 			config['cookbooks_url'] ? "if [ -d chef-cookbooks ]; then cd chef-cookbooks; git pull; else git clone #{config['cookbooks_url']} chef-cookbooks; fi" : "echo done"
 		]
 		ssh(hostname, commands)
@@ -197,19 +197,21 @@ class Sumo
 	  end
 	  if config['chef-validation']
 	    scp(hostname, config['chef-validation'], "validation.pem")
+	    ssh(hostname, ["sudo mv validation.pem /etc/chef/"])
     end
 	end
 
 	def setup_role(hostname, instance_id, role)
 		commands = [
-			"cd chef-cookbooks",
-			"/var/lib/gems/1.8/bin/chef-solo -c config/solo.rb -j roles/bootstrap.json -r http://s3.amazonaws.com/chef-solo/bootstrap-latest.tar.gz",
-			"if [ -f config/client.rb ]; then cp config/client.rb /etc/chef/client.rb; fi",
-			"if [ -f ~/validation.pem ]; then mv ~/validation.pem /etc/chef/ && chef-client ; rm /etc/chef/validation.pem; fi"
+		  "if [ ! -f /etc/chef/client.pem ]; then cd chef-cookbooks",
+			"sudo /var/lib/gems/1.8/bin/chef-solo -c config/solo.rb -j roles/bootstrap.json -r http://s3.amazonaws.com/chef-solo/bootstrap-latest.tar.gz",
+			"if [ -f config/client.rb ]; then sudo cp config/client.rb /etc/chef/client.rb; fi",
+			"sudo /var/lib/gems/1.8/bin/chef-client",
+			"sudo rm /etc/chef/validation.pem; fi"
 		]
 		ssh(hostname, commands)
 		`knife node run_list add #{instance_id} "role[#{role}]"`
-		ssh(hostname, %w{chef-client})
+		ssh(hostname, ["sudo /var/lib/gems/1.8/bin/chef-client"])
 	end
 
 	def ssh(hostname, cmds)
@@ -277,7 +279,7 @@ class Sumo
 	end
 
 	def fetch_resources(hostname)
-		cmd = "ssh -i #{keypair_file} #{config['user']}@#{hostname} 'cat /root/resources' 2>&1"
+		cmd = "ssh -i #{keypair_file} #{config['user']}@#{hostname} 'sudo cat /root/resources' 2>&1"
 		out = IO.popen(cmd, 'r') { |pipe| pipe.read }
 		abort "failed to read resources, output:\n#{out}" unless $?.success?
 		parse_resources(out, hostname)
