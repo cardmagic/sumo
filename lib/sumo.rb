@@ -175,7 +175,12 @@ class Sumo
 			begin
 				Timeout::timeout(4) do
 					TCPSocket.new(hostname, 22)
-					return
+					IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > #{config['logfile'] || "~/.sumo/ssh.log"} 2>&1", "w") do |pipe|
+      			pipe.puts "ls"
+      		end
+      		if $?.success?
+      			return
+      		end
 				end
 			rescue SocketError, Timeout::Error, Errno::ECONNREFUSED, Errno::EHOSTUNREACH
 			end
@@ -309,10 +314,10 @@ class Sumo
 
 	def default_config
 		{
-			'user' => 'root',
-			'ami' => 'ami-ed46a784',
-			'availability_zone' => 'us-east-1b',
-			'instance_size' => 'm1.small'
+			'user' => 'ubuntu',
+			'ami' => 'ami-1234de7b', # Ubuntu 10.04 LTS (Lucid Lynx)
+			'availability_zone' => 'us-east-1d',
+			'instance_size' => 't1.micro'
 		}
 	end
 
