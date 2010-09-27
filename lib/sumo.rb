@@ -177,10 +177,10 @@ class Sumo
 				Timeout::timeout(4) do
 					TCPSocket.new(hostname, 22)
 					if attemtps < 10
+        		attempts += 1
   					IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > #{config['logfile'] || "~/.sumo/ssh.log"} 2>&1", "w") do |pipe|
         			pipe.puts "ls"
         		end
-        		attempts += 1
       		else
       		  return false
     		  end
