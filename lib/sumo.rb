@@ -171,13 +171,19 @@ class Sumo
 
 	def wait_for_ssh(hostname)
 		raise ArgumentError unless hostname
+		attempts = 0
 		loop do
 			begin
 				Timeout::timeout(4) do
 					TCPSocket.new(hostname, 22)
-					IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > #{config['logfile'] || "~/.sumo/ssh.log"} 2>&1", "w") do |pipe|
-      			pipe.puts "ls"
-      		end
+					if attemtps < 10
+  					IO.popen("ssh -i #{keypair_file} #{config['user']}@#{hostname} > #{config['logfile'] || "~/.sumo/ssh.log"} 2>&1", "w") do |pipe|
+        			pipe.puts "ls"
+        		end
+        		attempts += 1
+      		else
+      		  return false
+    		  end
       		if $?.success?
       			return
       		else
