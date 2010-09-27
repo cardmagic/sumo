@@ -180,7 +180,9 @@ class Sumo
       		end
       		if $?.success?
       			return
-      		end
+      		else
+      		  sleep 5
+    		  end
 				end
 			rescue SocketError, Timeout::Error, Errno::ECONNREFUSED, Errno::EHOSTUNREACH
 			end
