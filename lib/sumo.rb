@@ -185,7 +185,7 @@ class Sumo
       		  return false
     		  end
       		if $?.success?
-      			return
+      			return true
       		else
       		  sleep 5
     		  end
@@ -241,14 +241,14 @@ class Sumo
 			pipe.puts cmds.join(' && ')
 		end
 		unless $?.success?
-			abort "failed\nCheck #{config['logfile'] || "~/.sumo/ssh.log"} for the output"
+			raise "failed\nCheck #{config['logfile'] || "~/.sumo/ssh.log"} for the output"
 		end
 	end
 
 	def scp(hostname, directory, endpoint=".")
 		`scp -i #{keypair_file} -r #{directory} #{config['user']}@#{hostname}:#{endpoint}`
 		unless $?.success?
-			abort "failed to transfer #{directory}"
+			raise "failed to transfer #{directory}"
 		end
 	end
 
@@ -260,7 +260,7 @@ class Sumo
         ssh.open_channel do |channel|          
           cmds.each do |cmd|
             channel.exec cmd do |ch, success|
-        			abort "failed on #{cmd}\nCheck ~/.sumo/ssh.log for the output" unless success
+        			raise "failed on #{cmd}\nCheck ~/.sumo/ssh.log for the output" unless success
 
               channel.on_data do |ch, data|
                 puts "Got data #{data.inspect}"
@@ -294,7 +294,7 @@ class Sumo
 	def fetch_resources(hostname)
 		cmd = "ssh -i #{keypair_file} #{config['user']}@#{hostname} 'sudo cat /root/resources' 2>&1"
 		out = IO.popen(cmd, 'r') { |pipe| pipe.read }
-		abort "failed to read resources, output:\n#{out}" unless $?.success?
+		raise "failed to read resources, output:\n#{out}" unless $?.success?
 		parse_resources(out, hostname)
 	end
 
